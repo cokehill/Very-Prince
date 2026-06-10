@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { WalletButton } from "@/components/WalletButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -159,10 +159,20 @@ function DashboardPageInner({ dictionary, lang }: { dictionary: Dictionary; lang
   );
 }
 
-// ── Main Page Component ───────────────────────────────────────────────────────
+export default function DashboardPage({ params }: DashboardPageProps) {
+  const [dictionary, setDictionary] = useState<Dictionary | null>(null);
 
-export default async function DashboardPage({ params }: DashboardPageProps) {
-  const dictionary = await getDictionary(params.lang);
+  useEffect(() => {
+    getDictionary(params.lang).then(setDictionary);
+  }, [params.lang]);
+
+  if (!dictionary) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-white">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-white">{dictionary.common.loading}</div>}>
