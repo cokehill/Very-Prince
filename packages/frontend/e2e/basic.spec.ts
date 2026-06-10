@@ -1,4 +1,4 @@
-﻿import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
 test.describe('General UI and Navigation', () => {
   test.beforeEach(async ({ page }) => {
@@ -19,7 +19,7 @@ test.describe('General UI and Navigation', () => {
     await page.goto('/');
 
     // Check for project title/logo
-    await expect(page.getByText('Very-prince', { exact: true })).toBeVisible();
+    await expect(page.getByText('very-prince', { exact: true })).toBeVisible();
 
     // Check for Glassmorphism-style hero section content
     await expect(page.getByText('Built on Stellar Soroban')).toBeVisible();
@@ -33,7 +33,7 @@ test.describe('General UI and Navigation', () => {
     await page.goto('/');
 
     // Click on Dashboard link
-    await page.getByRole('link', { name: 'Dashboard' }).click();
+    await page.getByRole('link', { name: 'Dashboard', exact: true }).click();
 
     // Verify navigation to /dashboard
     await expect(page).toHaveURL(/\/dashboard/);
