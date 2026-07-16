@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { emitSSEEvent } from '../services/sse.js';
+import { emitSSEEvent } from '../services/sse.ts';
 
 const sseConnections = new Set<any>();
 

@@ -7,10 +7,10 @@ export default fp(async (fastify: FastifyInstance) => {
     global: false,
     max: 100,
     timeWindow: '1 minute',
-    errorResponseBuilder: (request, context) => ({
+    errorResponseBuilder: (_request, context) => ({
       statusCode: 429,
       error: 'Too Many Requests',
-      message: Rate limit exceeded. Try again in  seconds.,
+      message: `Rate limit exceeded. Try again in ${context.ttl} seconds.`,
     }),
   });
 });

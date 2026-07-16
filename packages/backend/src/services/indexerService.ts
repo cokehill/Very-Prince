@@ -121,7 +121,7 @@ export class IndexerService {
 
       const latestLedger = Math.max(...eventsResponse.events.map(e => e.ledger));
 
-      await prisma.(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         await tx.indexerState.upsert({
           where: { id: this.CURSOR_ID },
           update: { lastProcessedLedger: latestLedger },

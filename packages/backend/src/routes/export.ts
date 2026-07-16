@@ -15,9 +15,9 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import csv from "fast-csv";
-import { prisma } from "../services/db.js";
+import { prisma } from "../services/db.ts";
 
-const prisma = new PrismaClient();
+
 
 const ExportQuerySchema = z.object({
   type: z.enum(['csv', 'json']),
