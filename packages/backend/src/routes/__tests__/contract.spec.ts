@@ -5,7 +5,7 @@ type ContractControllerMock = {
   getOrganizations: ReturnType<typeof vi.fn>;
 };
 
-vi.mock('../controllers/contractController.js', () => {
+vi.mock('../controllers/contractController.ts', () => {
   return {
     contractController: {
       getOrganizations: vi.fn().mockResolvedValue({
