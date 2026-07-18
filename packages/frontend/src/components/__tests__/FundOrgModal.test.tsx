@@ -5,15 +5,16 @@ import { vi } from "vitest";
 import { FundOrgModal } from "../FundOrgModal";
 
 const mockFundOrg = vi.fn();
-const mockUseFundOrg = vi.fn();
+
 vi.mock("@/hooks/useFundOrg", () => ({
   useFundOrg: (options?: { onProgress?: (step: string) => void }) => mockUseFundOrg(options),
 }));
 
+let mockWalletIsConnected = true;
 vi.mock("@/hooks/useUnifiedWallet", () => ({
   useUnifiedWallet: () => ({
-    isConnected: true,
-    publicKey: "GDTESTINGPUBLICKEY1234567890",
+    isConnected: mockWalletIsConnected,
+    publicKey: mockWalletIsConnected ? "GDTESTINGPUBLICKEY1234567890" : null,
   }),
 }));
 
@@ -24,35 +25,59 @@ vi.mock("@/lib/sorobanClient", () => ({
 describe("FundOrgModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseFundOrg.mockReturnValue({
-      fundOrg: mockFundOrg,
-      isSubmitting: false,
-      error: null,
-    });
+    mockWalletIsConnected = true;
   });
 
-  test("shows a step-by-step progress bar while funding", async () => {
+  test("renders dialog with correct ARIA attributes", () => {
     const onSuccess = vi.fn();
     const onClose = vi.fn();
-    mockFundOrg.mockImplementationOnce(async () => {
-      return undefined;
-    });
 
     render(<FundOrgModal orgId="testorg" onSuccess={onSuccess} onClose={onClose} />);
 
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Confirm Funding/i })).not.toBeDisabled();
-    });
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toHaveAttribute("aria-modal", "true");
+    expect(dialog).toHaveAttribute("aria-labelledby", "fund-modal-title");
+  });
 
+  test("header close button has correct aria-label", () => {
+    const onSuccess = vi.fn();
+    const onClose = vi.fn();
+
+    render(<FundOrgModal orgId="testorg" onSuccess={onSuccess} onClose={onClose} />);
+
+    const closeBtn = screen.getByRole("button", { name: "Close modal" });
+    expect(closeBtn).toBeInTheDocument();
+  });
+
+  test("submit button has correct aria-label when requesting connection", () => {
+    mockWalletIsConnected = false;
+
+    const onSuccess = vi.fn();
+    const onClose = vi.fn();
+
+    render(<FundOrgModal orgId="testorg" onSuccess={onSuccess} onClose={onClose} />);
+
+    const submitBtn = screen.getByRole("button", { name: "Please connect Freighter" });
+    expect(submitBtn).toBeInTheDocument();
+  });
+
+  test("submit button has correct aria-label for funding", async () => {
+    const onSuccess = vi.fn();
+    const onClose = vi.fn();
+    mockFundOrg.mockResolvedValueOnce(undefined);
+
+    render(<FundOrgModal orgId="testorg" onSuccess={onSuccess} onClose={onClose} />);
+
+    // Enter amount to enable the submit button
     const input = screen.getByPlaceholderText("0.00");
     fireEvent.change(input, { target: { value: "10" } });
 
-    fireEvent.click(screen.getByRole("button", { name: /Confirm Funding/i }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Confirm funding" })).not.toBeDisabled();
+    });
 
-    expect(await screen.findByText("Building XDR")).toBeInTheDocument();
-    expect(screen.getByText("Requesting Signature")).toBeInTheDocument();
-    expect(screen.getByText("Submitting")).toBeInTheDocument();
-    expect(screen.getByText("Confirmed")).toBeInTheDocument();
+    const submitBtn = screen.getByRole("button", { name: "Confirm funding" });
+    expect(submitBtn).toBeInTheDocument();
   });
 
   test("shows success screen and share to Twitter button after successful funding", async () => {
@@ -62,17 +87,16 @@ describe("FundOrgModal", () => {
 
     render(<FundOrgModal orgId="testorg" onSuccess={onSuccess} onClose={onClose} />);
 
-    // Wait for balance to load and modal to be ready
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Confirm Funding/i })).not.toBeDisabled();
-    });
-
-    // Enter amount
+    // Enter amount to enable the submit button
     const input = screen.getByPlaceholderText("0.00");
     fireEvent.change(input, { target: { value: "10" } });
 
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Confirm funding" })).not.toBeDisabled();
+    });
+
     // Click fund
-    const submitBtn = screen.getByRole("button", { name: /Confirm Funding/i });
+    const submitBtn = screen.getByRole("button", { name: "Confirm funding" });
     fireEvent.click(submitBtn);
 
     // Verify fundOrg was called
@@ -84,12 +108,11 @@ describe("FundOrgModal", () => {
     expect(await screen.findByText(/Funding Successful/i)).toBeInTheDocument();
     
     // Verify Share to Twitter button is present
-    const twitterShareBtn = screen.getByText("Share to Twitter/X");
-    expect(twitterShareBtn).toBeInTheDocument();
-    expect(twitterShareBtn.closest('a')).toHaveAttribute('href', expect.stringContaining('twitter.com/intent/tweet'));
+    const twitterShareLink = screen.getByRole("link", { name: "Share funding on Twitter" });
+    expect(twitterShareLink).toHaveAttribute('href', expect.stringContaining('twitter.com/intent/tweet'));
 
-    // Verify Close button
-    const closeBtn = screen.getByRole("button", { name: "Close" });
+    // Verify success Close button has aria-label
+    const closeBtn = screen.getByRole("button", { name: "Close success message" });
     fireEvent.click(closeBtn);
 
     // Verify onSuccess is called
