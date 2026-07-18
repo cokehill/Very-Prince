@@ -2,7 +2,7 @@ import * as cron from 'node-cron';
 import { CONTRACT_ID, DEPLOYMENT_LEDGER } from '../config/env.js';
 import { stellarService } from './stellarService.js';
 import { prisma } from './db.js';
-import { emitSSEEvent } from '../routes/events.js';
+import { emitSSEEvent } from './sse.js';
 import { webhookService } from './webhookService.js';
 import { logger } from '../utils/logger.js';
 import {
